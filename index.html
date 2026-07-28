@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>咖啡好运签</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="shell">
+      <section class="screen active" id="homeScreen" aria-labelledby="homeTitle">
+        <div class="brand">
+          <div class="cup" aria-hidden="true">
+            <span class="steam steam-one"></span>
+            <span class="steam steam-two"></span>
+            <span class="steam steam-three"></span>
+            <span class="cup-bowl"></span>
+          </div>
+          <p>朋友的小咖啡局</p>
+          <h1 id="homeTitle">咖啡好运签</h1>
+        </div>
+
+        <div class="mode-grid">
+          <button class="mode-card" type="button" data-go="drawScreen">
+            <span class="mode-icon">抽</span>
+            <span class="mode-title">抽一杯</span>
+            <span class="mode-copy">输入名字，选择抽几次，10 次保底。</span>
+          </button>
+          <button class="mode-card" type="button" data-go="giftScreen">
+            <span class="mode-icon">送</span>
+            <span class="mode-title">随机赠送</span>
+            <span class="mode-copy">放入名单，随机选出今天的咖啡人。</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="screen" id="drawScreen" aria-labelledby="drawTitle">
+        <header class="topbar">
+          <button class="icon-button" type="button" data-go="homeScreen" aria-label="返回首页">‹</button>
+          <h2 id="drawTitle">抽一杯</h2>
+          <button class="ghost-button" type="button" id="resetDraw">重置</button>
+        </header>
+
+        <form class="panel" id="drawForm">
+          <label class="field">
+            <span>谁来抽</span>
+            <input id="playerName" type="text" maxlength="16" placeholder="输入名字" autocomplete="off" />
+          </label>
+
+          <div class="field">
+            <span>这次抽几次</span>
+            <div class="stepper" role="group" aria-label="抽奖次数">
+              <button type="button" id="minusDraws" aria-label="减少次数">−</button>
+              <output id="drawCount">1</output>
+              <button type="button" id="plusDraws" aria-label="增加次数">+</button>
+            </div>
+          </div>
+
+          <button class="primary-button" type="submit">开始摇杯</button>
+        </form>
+
+        <div class="status-strip">
+          <span>当前未中</span>
+          <strong id="missCount">0</strong>
+          <span>次，第 10 次保底</span>
+        </div>
+
+        <section class="result-panel" id="drawResult" aria-live="polite">
+          <div class="result-visual" id="drawVisual">☕</div>
+          <p class="result-kicker">等待开杯</p>
+          <h3>今天会不会被咖啡选中？</h3>
+          <p>输入名字后，可以一次连抽，也可以慢慢来。</p>
+        </section>
+
+        <section class="history" aria-labelledby="drawHistoryTitle">
+          <h3 id="drawHistoryTitle">最近记录</h3>
+          <ul id="drawHistory"></ul>
+        </section>
+      </section>
+
+      <section class="screen" id="giftScreen" aria-labelledby="giftTitle">
+        <header class="topbar">
+          <button class="icon-button" type="button" data-go="homeScreen" aria-label="返回首页">‹</button>
+          <h2 id="giftTitle">随机赠送</h2>
+          <button class="ghost-button" type="button" id="clearNames">清空</button>
+        </header>
+
+        <form class="panel" id="giftForm">
+          <label class="field">
+            <span>候选名单</span>
+            <textarea id="nameList" rows="7" placeholder="一行一个名字&#10;比如：&#10;小陈&#10;阿岚&#10;Mia"></textarea>
+          </label>
+          <button class="primary-button" type="submit">随机选择</button>
+        </form>
+
+        <section class="result-panel gift-result" id="giftResult" aria-live="polite">
+          <div class="result-visual">🎁</div>
+          <p class="result-kicker">等待选择</p>
+          <h3>把今天的咖啡送给谁？</h3>
+          <p>名单会留在这台手机上，方便下次继续用。</p>
+        </section>
+
+        <section class="history" aria-labelledby="giftHistoryTitle">
+          <h3 id="giftHistoryTitle">最近结果</h3>
+          <ul id="giftHistory"></ul>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
