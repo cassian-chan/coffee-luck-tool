@@ -262,6 +262,28 @@ h3 {
   font-size: 14px;
 }
 
+.text-button,
+.tiny-button {
+  border: 0;
+  background: transparent;
+  color: var(--blue);
+  font-weight: 700;
+}
+
+.text-button {
+  padding: 4px 0;
+  font-size: 14px;
+}
+
+.tiny-button {
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: rgba(217, 82, 104, 0.1);
+  color: var(--berry);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
 .panel {
   padding: 16px;
   display: grid;
@@ -379,6 +401,11 @@ textarea:focus {
   margin: 0;
 }
 
+.code-line {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
 .result-panel.win {
   border-color: rgba(243, 187, 76, 0.88);
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 211, 0.92));
@@ -401,8 +428,16 @@ textarea:focus {
   padding: 15px 16px;
 }
 
-.history h3 {
+.section-head {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 8px;
+}
+
+.history h3 {
   font-size: 15px;
 }
 
@@ -418,6 +453,92 @@ textarea:focus {
   padding: 9px 0;
   border-top: 1px solid rgba(234, 220, 205, 0.7);
   font-size: 14px;
+}
+
+.mini-stat {
+  color: var(--muted);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.redeem-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.redeem-form input {
+  height: 40px;
+}
+
+.redeem-message {
+  margin: 0 0 6px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.voucher-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.voucher-list strong {
+  display: block;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.voucher-list small {
+  display: block;
+  margin-top: 2px;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: end center;
+  padding: 18px;
+  background: rgba(34, 25, 20, 0.36);
+}
+
+.modal[hidden] {
+  display: none;
+}
+
+.modal-sheet {
+  width: min(100%, 480px);
+  max-height: min(78vh, 720px);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  border: 1px solid rgba(234, 220, 205, 0.86);
+  border-radius: 8px;
+  background: rgba(255, 250, 242, 0.98);
+  box-shadow: var(--shadow);
+}
+
+.full-history {
+  margin: 0;
+  padding: 0;
+  overflow: auto;
+  list-style: none;
+}
+
+.full-history li {
+  padding: 11px 0;
+  border-top: 1px solid rgba(234, 220, 205, 0.9);
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .empty {

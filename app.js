@@ -7,12 +7,18 @@ let drawTimes = 1;
 
 const screens = [...document.querySelectorAll(".screen")];
 const drawCount = document.querySelector("#drawCount");
+const playerName = document.querySelector("#playerName");
+const missLabel = document.querySelector("#missLabel");
 const missCount = document.querySelector("#missCount");
 const drawResult = document.querySelector("#drawResult");
-const drawVisual = document.querySelector("#drawVisual");
 const drawHistory = document.querySelector("#drawHistory");
 const giftHistory = document.querySelector("#giftHistory");
 const nameList = document.querySelector("#nameList");
+const historyModal = document.querySelector("#historyModal");
+const allDrawHistory = document.querySelector("#allDrawHistory");
+const redeemMessage = document.querySelector("#redeemMessage");
+const voucherList = document.querySelector("#voucherList");
+const voucherStat = document.querySelector("#voucherStat");
 
 document.querySelectorAll("[data-go]").forEach((button) => {
   button.addEventListener("click", () => showScreen(button.dataset.go));
@@ -28,9 +34,11 @@ document.querySelector("#plusDraws").addEventListener("click", () => {
   renderDrawCount();
 });
 
+playerName.addEventListener("input", renderMissStatus);
+
 document.querySelector("#drawForm").addEventListener("submit", async (event) => {
   event.preventDefault();
-  const player = document.querySelector("#playerName").value.trim() || "这位朋友";
+  const player = getActivePlayer();
   await animateDraw();
 
   const results = [];
@@ -40,24 +48,51 @@ document.querySelector("#drawForm").addEventListener("submit", async (event) => 
     state.drawHistory.unshift(result);
   }
 
-  state.drawHistory = state.drawHistory.slice(0, 8);
   saveState();
   renderDrawResult(results);
   render();
 });
 
 document.querySelector("#resetDraw").addEventListener("click", () => {
-  state.misses = 0;
+  state.playerMisses = {};
   state.drawHistory = [];
+  state.vouchers = [];
   saveState();
   drawResult.className = "result-panel";
   drawResult.innerHTML = `
     <div class="result-visual" id="drawVisual">☕</div>
     <p class="result-kicker">已经重置</p>
     <h3>下一杯重新开始</h3>
-    <p>未中奖次数清零，记录也清空了。</p>
+    <p>所有人的保底次数、记录和核销码都清空了。</p>
   `;
   render();
+});
+
+document.querySelector("#showAllDraws").addEventListener("click", () => {
+  renderAllDrawHistory();
+  historyModal.hidden = false;
+});
+
+document.querySelector("#closeHistory").addEventListener("click", () => {
+  historyModal.hidden = true;
+});
+
+historyModal.addEventListener("click", (event) => {
+  if (event.target === historyModal) {
+    historyModal.hidden = true;
+  }
+});
+
+document.querySelector("#redeemForm").addEventListener("submit", (event) => {
+  event.preventDefault();
+  const code = document.querySelector("#redeemCode").value.trim();
+  redeemVoucher(code);
+});
+
+voucherList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-code]");
+  if (!button) return;
+  voidVoucher(button.dataset.code);
 });
 
 document.querySelector("#giftForm").addEventListener("submit", async (event) => {
@@ -95,15 +130,22 @@ document.querySelector("#clearNames").addEventListener("click", () => {
 });
 
 function runSingleDraw(player) {
-  const attempt = state.misses + 1;
+  const attempt = getPlayerMisses(player) + 1;
   const guaranteed = attempt >= GUARANTEE_AT;
   const won = guaranteed || Math.random() < WIN_RATE;
   const code = won ? makeCode(player) : "";
 
   if (won) {
-    state.misses = 0;
+    state.playerMisses[player] = 0;
+    state.vouchers.unshift({
+      code,
+      player,
+      status: "active",
+      createdAt: new Date().toLocaleString("zh-CN", { hour12: false }),
+      redeemedAt: "",
+    });
   } else {
-    state.misses = attempt;
+    state.playerMisses[player] = attempt;
   }
 
   return {
@@ -139,7 +181,7 @@ function renderDrawResult(results) {
       <div class="result-visual">☕</div>
       <p class="result-kicker">${wins.length > 1 ? `中了 ${wins.length} 杯` : "中了"}</p>
       <h3>${player} 获得一杯咖啡</h3>
-      <p>核销码：${codes}</p>
+      <p class="code-line">核销码：${codes}</p>
     `;
     return;
   }
@@ -149,7 +191,7 @@ function renderDrawResult(results) {
     <div class="result-visual">○</div>
     <p class="result-kicker">这次没中</p>
     <h3>${player} 离保底更近了</h3>
-    <p>当前已连续未中 ${state.misses} 次。</p>
+    <p>当前已连续未中 ${getPlayerMisses(last.player)} 次。</p>
   `;
 }
 
@@ -166,10 +208,11 @@ function renderGiftMessage(title, copy, icon, shaking = false) {
 
 function render() {
   renderDrawCount();
-  missCount.textContent = state.misses;
+  renderMissStatus();
   nameList.value = state.names.join("\n");
   renderDrawHistory();
   renderGiftHistory();
+  renderVouchers();
 }
 
 function renderDrawCount() {
@@ -184,11 +227,64 @@ function renderDrawHistory() {
   }
 
   drawHistory.innerHTML = state.drawHistory
+    .slice(0, 8)
     .map((item) => {
       const player = escapeHtml(item.player);
       const mark = item.won ? `中奖 ${escapeHtml(item.code)}` : `未中，第 ${item.attempt} 次`;
       const reason = item.guaranteed ? "，保底" : "";
       return `<li>${escapeHtml(item.time)}｜${player}｜${mark}${reason}</li>`;
+    })
+    .join("");
+}
+
+function renderAllDrawHistory() {
+  if (state.drawHistory.length === 0) {
+    allDrawHistory.innerHTML = `<li class="empty">还没有抽奖记录。</li>`;
+    return;
+  }
+
+  allDrawHistory.innerHTML = state.drawHistory
+    .map((item) => {
+      const player = escapeHtml(item.player);
+      const mark = item.won ? `中奖 ${escapeHtml(item.code)}` : `未中，第 ${item.attempt} 次`;
+      const reason = item.guaranteed ? "，保底" : "";
+      return `<li>${escapeHtml(item.time)}｜${player}｜${mark}${reason}</li>`;
+    })
+    .join("");
+}
+
+function renderMissStatus() {
+  const player = getActivePlayer();
+  missLabel.textContent = `${player} 当前未中`;
+  missCount.textContent = getPlayerMisses(player);
+}
+
+function renderVouchers() {
+  const activeCount = state.vouchers.filter((voucher) => voucher.status === "active").length;
+  voucherStat.textContent = `${activeCount} 张未核销`;
+
+  if (state.vouchers.length === 0) {
+    voucherList.innerHTML = `<li class="empty">还没有中奖核销码。</li>`;
+    return;
+  }
+
+  voucherList.innerHTML = state.vouchers
+    .slice(0, 6)
+    .map((voucher) => {
+      const statusText = getVoucherStatusText(voucher);
+      const action =
+        voucher.status === "active"
+          ? `<button class="tiny-button" type="button" data-code="${escapeHtml(voucher.code)}">作废</button>`
+          : "";
+      return `
+        <li>
+          <span>
+            <strong>${escapeHtml(voucher.code)}</strong>
+            <small>${escapeHtml(voucher.player)}｜${statusText}</small>
+          </span>
+          ${action}
+        </li>
+      `;
     })
     .join("");
 }
@@ -206,6 +302,9 @@ function renderGiftHistory() {
 
 function showScreen(id) {
   screens.forEach((screen) => screen.classList.toggle("active", screen.id === id));
+  if (id === "drawScreen") {
+    renderMissStatus();
+  }
 }
 
 function parseNames(value) {
@@ -213,9 +312,62 @@ function parseNames(value) {
 }
 
 function makeCode(player) {
-  const prefix = player.slice(0, 2).toUpperCase();
+  const prefix = player.replace(/\s+/g, "").slice(0, 16) || "咖啡";
   const random = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `${prefix}-${random}`;
+}
+
+function getActivePlayer() {
+  return playerName.value.trim() || "这位朋友";
+}
+
+function getPlayerMisses(player) {
+  return Number(state.playerMisses[player]) || 0;
+}
+
+function redeemVoucher(code) {
+  if (!code) {
+    redeemMessage.textContent = "先输入一个核销码。";
+    return;
+  }
+
+  const voucher = state.vouchers.find((item) => item.code.toLowerCase() === code.toLowerCase());
+  if (!voucher) {
+    redeemMessage.textContent = "没有找到这个核销码。";
+    return;
+  }
+
+  if (voucher.status === "redeemed") {
+    redeemMessage.textContent = `这个码已核销：${voucher.redeemedAt}`;
+    return;
+  }
+
+  if (voucher.status === "void") {
+    redeemMessage.textContent = "这个码已经作废。";
+    return;
+  }
+
+  voucher.status = "redeemed";
+  voucher.redeemedAt = new Date().toLocaleString("zh-CN", { hour12: false });
+  saveState();
+  redeemMessage.textContent = `核销成功：${voucher.player} 的一杯咖啡。`;
+  document.querySelector("#redeemCode").value = "";
+  renderVouchers();
+}
+
+function voidVoucher(code) {
+  const voucher = state.vouchers.find((item) => item.code === code);
+  if (!voucher || voucher.status !== "active") return;
+  voucher.status = "void";
+  saveState();
+  redeemMessage.textContent = `已作废：${voucher.code}`;
+  renderVouchers();
+}
+
+function getVoucherStatusText(voucher) {
+  if (voucher.status === "redeemed") return `已核销 ${voucher.redeemedAt}`;
+  if (voucher.status === "void") return "已作废";
+  return `未核销 ${voucher.createdAt}`;
 }
 
 function escapeHtml(value) {
@@ -238,14 +390,19 @@ function wait(ms) {
 function loadState() {
   try {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const playerMisses =
+      saved?.playerMisses && typeof saved.playerMisses === "object"
+        ? saved.playerMisses
+        : { 这位朋友: Number(saved?.misses) || 0 };
     return {
-      misses: Number(saved?.misses) || 0,
+      playerMisses,
       names: Array.isArray(saved?.names) ? saved.names : [],
       drawHistory: Array.isArray(saved?.drawHistory) ? saved.drawHistory : [],
       giftHistory: Array.isArray(saved?.giftHistory) ? saved.giftHistory : [],
+      vouchers: Array.isArray(saved?.vouchers) ? saved.vouchers : [],
     };
   } catch {
-    return { misses: 0, names: [], drawHistory: [], giftHistory: [] };
+    return { playerMisses: {}, names: [], drawHistory: [], giftHistory: [], vouchers: [] };
   }
 }
 

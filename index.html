@@ -60,7 +60,7 @@
         </form>
 
         <div class="status-strip">
-          <span>当前未中</span>
+          <span id="missLabel">当前未中</span>
           <strong id="missCount">0</strong>
           <span>次，第 10 次保底</span>
         </div>
@@ -73,8 +73,24 @@
         </section>
 
         <section class="history" aria-labelledby="drawHistoryTitle">
-          <h3 id="drawHistoryTitle">最近记录</h3>
+          <div class="section-head">
+            <h3 id="drawHistoryTitle">最近记录</h3>
+            <button class="text-button" type="button" id="showAllDraws">查看全部</button>
+          </div>
           <ul id="drawHistory"></ul>
+        </section>
+
+        <section class="history" aria-labelledby="redeemTitle">
+          <div class="section-head">
+            <h3 id="redeemTitle">核销管理</h3>
+            <span class="mini-stat" id="voucherStat">0 张未核销</span>
+          </div>
+          <form class="redeem-form" id="redeemForm">
+            <input id="redeemCode" type="text" placeholder="输入核销码" autocomplete="off" />
+            <button class="ghost-button" type="submit">核销</button>
+          </form>
+          <p class="redeem-message" id="redeemMessage">中奖后会在这里管理核销码。</p>
+          <ul class="voucher-list" id="voucherList"></ul>
         </section>
       </section>
 
@@ -106,6 +122,17 @@
         </section>
       </section>
     </main>
+
+    <div class="modal" id="historyModal" hidden>
+      <div class="modal-sheet" role="dialog" aria-modal="true" aria-labelledby="allHistoryTitle">
+        <header class="topbar">
+          <button class="icon-button" type="button" id="closeHistory" aria-label="关闭全部记录">‹</button>
+          <h2 id="allHistoryTitle">全部记录</h2>
+          <span></span>
+        </header>
+        <ul class="full-history" id="allDrawHistory"></ul>
+      </div>
+    </div>
 
     <script src="./app.js"></script>
   </body>
