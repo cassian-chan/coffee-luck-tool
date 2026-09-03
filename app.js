@@ -1,9 +1,12 @@
 const STORAGE_KEY = "coffee-luck-tool-v1";
 const GUARANTEE_AT = 10;
 const WIN_RATE = 0.18;
+const VOUCHER_PREVIEW_LIMIT = 20;
 
 const state = loadState();
 let drawTimes = 1;
+let voucherFilter = "active";
+let showAllVouchers = false;
 
 const screens = [...document.querySelectorAll(".screen")];
 const drawCount = document.querySelector("#drawCount");
@@ -19,6 +22,7 @@ const allDrawHistory = document.querySelector("#allDrawHistory");
 const redeemMessage = document.querySelector("#redeemMessage");
 const voucherList = document.querySelector("#voucherList");
 const voucherStat = document.querySelector("#voucherStat");
+const toggleVouchers = document.querySelector("#toggleVouchers");
 
 document.querySelectorAll("[data-go]").forEach((button) => {
   button.addEventListener("click", () => showScreen(button.dataset.go));
@@ -93,6 +97,19 @@ voucherList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-code]");
   if (!button) return;
   voidVoucher(button.dataset.code);
+});
+
+document.querySelectorAll("[data-voucher-filter]").forEach((button) => {
+  button.addEventListener("click", () => {
+    voucherFilter = button.dataset.voucherFilter;
+    showAllVouchers = false;
+    renderVouchers();
+  });
+});
+
+toggleVouchers.addEventListener("click", () => {
+  showAllVouchers = !showAllVouchers;
+  renderVouchers();
 });
 
 document.querySelector("#giftForm").addEventListener("submit", async (event) => {
@@ -261,15 +278,28 @@ function renderMissStatus() {
 
 function renderVouchers() {
   const activeCount = state.vouchers.filter((voucher) => voucher.status === "active").length;
-  voucherStat.textContent = `${activeCount} 张未核销`;
+  voucherStat.textContent = `${activeCount} 张未核销 / 共 ${state.vouchers.length} 张`;
+  document.querySelectorAll("[data-voucher-filter]").forEach((button) => {
+    button.classList.toggle("active", button.dataset.voucherFilter === voucherFilter);
+  });
 
   if (state.vouchers.length === 0) {
     voucherList.innerHTML = `<li class="empty">还没有中奖核销码。</li>`;
+    toggleVouchers.hidden = true;
     return;
   }
 
-  voucherList.innerHTML = state.vouchers
-    .slice(0, 6)
+  const filteredVouchers =
+    voucherFilter === "all" ? state.vouchers : state.vouchers.filter((voucher) => voucher.status === voucherFilter);
+  const visibleVouchers = showAllVouchers ? filteredVouchers : filteredVouchers.slice(0, VOUCHER_PREVIEW_LIMIT);
+
+  if (filteredVouchers.length === 0) {
+    voucherList.innerHTML = `<li class="empty">这个分类里还没有核销码。</li>`;
+    toggleVouchers.hidden = true;
+    return;
+  }
+
+  voucherList.innerHTML = visibleVouchers
     .map((voucher) => {
       const statusText = getVoucherStatusText(voucher);
       const action =
@@ -287,6 +317,11 @@ function renderVouchers() {
       `;
     })
     .join("");
+
+  toggleVouchers.hidden = filteredVouchers.length <= VOUCHER_PREVIEW_LIMIT;
+  toggleVouchers.textContent = showAllVouchers
+    ? "收起核销码"
+    : `查看全部核销码（${filteredVouchers.length}）`;
 }
 
 function renderGiftHistory() {

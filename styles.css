@@ -472,6 +472,30 @@ textarea:focus {
   height: 40px;
 }
 
+.filter-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.filter-tab {
+  min-width: 0;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 253, 249, 0.74);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.filter-tab.active {
+  border-color: rgba(111, 65, 41, 0.38);
+  background: var(--coffee);
+  color: #fffaf2;
+}
+
 .redeem-message {
   margin: 0 0 6px;
   color: var(--muted);
@@ -484,6 +508,17 @@ textarea:focus {
   align-items: center;
   justify-content: space-between;
   gap: 10px;
+}
+
+.voucher-list {
+  max-height: 280px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.list-more {
+  margin-top: 8px;
+  justify-self: center;
 }
 
 .voucher-list strong {

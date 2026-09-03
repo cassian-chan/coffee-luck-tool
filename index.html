@@ -89,8 +89,15 @@
             <input id="redeemCode" type="text" placeholder="输入核销码" autocomplete="off" />
             <button class="ghost-button" type="submit">核销</button>
           </form>
+          <div class="filter-tabs" aria-label="核销码状态筛选">
+            <button class="filter-tab active" type="button" data-voucher-filter="active">未核销</button>
+            <button class="filter-tab" type="button" data-voucher-filter="redeemed">已核销</button>
+            <button class="filter-tab" type="button" data-voucher-filter="void">已作废</button>
+            <button class="filter-tab" type="button" data-voucher-filter="all">全部</button>
+          </div>
           <p class="redeem-message" id="redeemMessage">中奖后会在这里管理核销码。</p>
           <ul class="voucher-list" id="voucherList"></ul>
+          <button class="text-button list-more" type="button" id="toggleVouchers" hidden>查看全部核销码</button>
         </section>
       </section>
 
