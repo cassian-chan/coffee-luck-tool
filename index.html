@@ -2,7 +2,7 @@
 <html lang="zh-CN">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
     <title>咖啡好运签</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -51,7 +51,7 @@
             <span>这次抽几次</span>
             <div class="stepper" role="group" aria-label="抽奖次数">
               <button type="button" id="minusDraws" aria-label="减少次数">−</button>
-              <output id="drawCount">1</output>
+              <input id="drawCount" type="number" min="1" max="10" value="1" inputmode="numeric" aria-label="抽奖次数" />
               <button type="button" id="plusDraws" aria-label="增加次数">+</button>
             </div>
           </div>

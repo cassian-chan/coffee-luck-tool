@@ -18,6 +18,10 @@
   box-sizing: border-box;
 }
 
+html {
+  touch-action: manipulation;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
@@ -37,6 +41,7 @@ textarea {
 button {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .shell {
@@ -275,6 +280,11 @@ h3 {
   font-size: 14px;
 }
 
+.text-button:disabled {
+  cursor: default;
+  color: rgba(122, 107, 97, 0.62);
+}
+
 .tiny-button {
   padding: 7px 9px;
   border-radius: 999px;
@@ -310,6 +320,7 @@ textarea {
 input {
   height: 48px;
   padding: 0 14px;
+  font-size: 16px;
 }
 
 textarea {
@@ -342,7 +353,26 @@ textarea:focus {
   font-size: 26px;
 }
 
-.stepper output {
+.stepper input {
+  height: 48px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  text-align: center;
+  outline: none;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.stepper input::-webkit-outer-spin-button,
+.stepper input::-webkit-inner-spin-button {
+  margin: 0;
+  appearance: none;
+}
+
+.stepper input {
   display: grid;
   place-items: center;
   border-inline: 1px solid var(--line);

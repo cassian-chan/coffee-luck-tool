@@ -29,19 +29,27 @@ document.querySelectorAll("[data-go]").forEach((button) => {
 });
 
 document.querySelector("#minusDraws").addEventListener("click", () => {
-  drawTimes = Math.max(1, drawTimes - 1);
-  renderDrawCount();
+  setDrawTimes(drawTimes - 1);
 });
 
 document.querySelector("#plusDraws").addEventListener("click", () => {
-  drawTimes = Math.min(10, drawTimes + 1);
-  renderDrawCount();
+  setDrawTimes(drawTimes + 1);
+});
+
+drawCount.addEventListener("input", () => {
+  if (drawCount.value === "") return;
+  setDrawTimes(drawCount.value);
+});
+
+drawCount.addEventListener("blur", () => {
+  setDrawTimes(drawCount.value || 1);
 });
 
 playerName.addEventListener("input", renderMissStatus);
 
 document.querySelector("#drawForm").addEventListener("submit", async (event) => {
   event.preventDefault();
+  setDrawTimes(drawCount.value || 1);
   const player = getActivePlayer();
   await animateDraw();
 
@@ -108,7 +116,12 @@ document.querySelectorAll("[data-voucher-filter]").forEach((button) => {
 });
 
 toggleVouchers.addEventListener("click", () => {
-  showAllVouchers = !showAllVouchers;
+  if (voucherFilter === "all" && showAllVouchers) {
+    showAllVouchers = false;
+  } else {
+    voucherFilter = "all";
+    showAllVouchers = true;
+  }
   renderVouchers();
 });
 
@@ -234,7 +247,12 @@ function render() {
 
 function renderDrawCount() {
   drawCount.value = drawTimes;
-  drawCount.textContent = drawTimes;
+}
+
+function setDrawTimes(value) {
+  const parsed = Number.parseInt(value, 10);
+  drawTimes = Number.isFinite(parsed) ? Math.min(10, Math.max(1, parsed)) : 1;
+  renderDrawCount();
 }
 
 function renderDrawHistory() {
@@ -286,6 +304,7 @@ function renderVouchers() {
   if (state.vouchers.length === 0) {
     voucherList.innerHTML = `<li class="empty">还没有中奖核销码。</li>`;
     toggleVouchers.hidden = true;
+    toggleVouchers.disabled = false;
     return;
   }
 
@@ -295,7 +314,9 @@ function renderVouchers() {
 
   if (filteredVouchers.length === 0) {
     voucherList.innerHTML = `<li class="empty">这个分类里还没有核销码。</li>`;
-    toggleVouchers.hidden = true;
+    toggleVouchers.hidden = false;
+    toggleVouchers.disabled = false;
+    toggleVouchers.textContent = `查看全部核销记录（${state.vouchers.length}）`;
     return;
   }
 
@@ -318,10 +339,13 @@ function renderVouchers() {
     })
     .join("");
 
-  toggleVouchers.hidden = filteredVouchers.length <= VOUCHER_PREVIEW_LIMIT;
-  toggleVouchers.textContent = showAllVouchers
-    ? "收起核销码"
-    : `查看全部核销码（${filteredVouchers.length}）`;
+  const allRecordsAreVisible = voucherFilter === "all" && filteredVouchers.length <= VOUCHER_PREVIEW_LIMIT;
+  toggleVouchers.hidden = false;
+  toggleVouchers.disabled = allRecordsAreVisible;
+  toggleVouchers.textContent =
+    voucherFilter === "all" && showAllVouchers
+      ? "收起到最近 20 条"
+      : `查看全部核销记录（${state.vouchers.length}）`;
 }
 
 function renderGiftHistory() {
