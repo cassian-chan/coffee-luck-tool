@@ -373,11 +373,13 @@ textarea:focus {
 }
 
 .stepper input {
-  display: grid;
-  place-items: center;
+  display: block;
   border-inline: 1px solid var(--line);
   color: var(--ink);
   font-weight: 800;
+  line-height: 48px;
+  font-size: 18px;
+  caret-color: var(--coffee);
 }
 
 .primary-button {

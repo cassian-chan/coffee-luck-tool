@@ -23,10 +23,30 @@ const redeemMessage = document.querySelector("#redeemMessage");
 const voucherList = document.querySelector("#voucherList");
 const voucherStat = document.querySelector("#voucherStat");
 const toggleVouchers = document.querySelector("#toggleVouchers");
+let lastTapAt = 0;
 
 document.querySelectorAll("[data-go]").forEach((button) => {
   button.addEventListener("click", () => showScreen(button.dataset.go));
 });
+
+document.addEventListener(
+  "touchend",
+  (event) => {
+    const now = Date.now();
+    const tappedControl = event.target.closest("button");
+    if (!tappedControl) {
+      lastTapAt = now;
+      return;
+    }
+
+    if (now - lastTapAt < 360) {
+      event.preventDefault();
+      tappedControl.click();
+    }
+    lastTapAt = now;
+  },
+  { passive: false },
+);
 
 document.querySelector("#minusDraws").addEventListener("click", () => {
   setDrawTimes(drawTimes - 1);
@@ -37,8 +57,11 @@ document.querySelector("#plusDraws").addEventListener("click", () => {
 });
 
 drawCount.addEventListener("input", () => {
-  if (drawCount.value === "") return;
-  setDrawTimes(drawCount.value);
+  const digits = drawCount.value.replace(/\D/g, "");
+  drawCount.value = digits.slice(0, 2);
+  if (drawCount.value !== "") {
+    setDrawTimes(drawCount.value);
+  }
 });
 
 drawCount.addEventListener("blur", () => {
