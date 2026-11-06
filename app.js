@@ -2,6 +2,38 @@ const STORAGE_KEY = "coffee-luck-tool-v1";
 const GUARANTEE_AT = 10;
 const WIN_RATE = 0.18;
 const VOUCHER_PREVIEW_LIMIT = 20;
+const BLESSINGS = [
+  "愿你今天遇见的好事，比咖啡香气更早抵达。",
+  "愿手里的这一杯，替生活按下温柔的暂停键。",
+  "今天适合被偏爱，也适合相信一点小幸运。",
+  "愿忙碌有回音，付出有结果，咖啡刚好温热。",
+  "愿你走过的每一步，都在悄悄靠近喜欢的生活。",
+  "今日宜开心，宜松弛，宜把好消息留给自己。",
+  "愿你眼里有光，杯里有香，心里不慌不忙。",
+  "愿所有迟到的好事，都在今天找到你。",
+  "这一杯敬认真生活的你，下一程请继续闪闪发光。",
+  "愿你有说走就走的勇气，也有随时停靠的安心。",
+  "今天的烦恼请稍后再来，你正忙着接收好运。",
+  "愿你的灵感像咖啡香一样，轻轻一飘就满屋子。",
+  "愿普通的一天，也能冒出值得收藏的小惊喜。",
+  "愿你做的选择都有底气，走的路都有风景。",
+  "今天会有一件小事，让你觉得人间很值得。",
+  "愿你被理解、被惦记，也被生活温柔回应。",
+  "愿你的努力不被辜负，期待不再久等。",
+  "把这一杯喝完，愿你刚好拥有重新出发的力气。",
+  "愿你忙而不乱，累而不丧，日子越过越有光。",
+  "愿你心里的答案慢慢清晰，也恰好坚定。",
+  "今日份好运已到账，请带着笑意签收。",
+  "愿你的下一次抬头，正好看见喜欢的风景。",
+  "愿所有“差一点”，最终都变成“刚刚好”。",
+  "愿你有被世界拥抱的运气，也有拥抱自己的能力。",
+  "今天不必事事完美，有一杯好咖啡就很不错。",
+  "愿你的愿望不声不响，却一个一个认真实现。",
+  "愿你遇见好人、听见好话、收到好消息。",
+  "愿今天的你，比昨天更自在，比明天更值得期待。",
+  "愿平凡日子有滋有味，重要时刻如愿以偿。",
+  "这一杯是好运的暗号：今天会有值得开心的事。",
+];
 
 const state = loadState();
 let drawTimes = 1;
@@ -92,6 +124,7 @@ document.querySelector("#resetDraw").addEventListener("click", () => {
   state.playerMisses = {};
   state.drawHistory = [];
   state.vouchers = [];
+  state.dailyBlessings = { date: "", usedIndexes: [] };
   saveState();
   drawResult.className = "result-panel";
   drawResult.innerHTML = `
@@ -183,18 +216,23 @@ document.querySelector("#clearNames").addEventListener("click", () => {
 });
 
 function runSingleDraw(player) {
+  const now = new Date();
   const attempt = getPlayerMisses(player) + 1;
   const guaranteed = attempt >= GUARANTEE_AT;
   const won = guaranteed || Math.random() < WIN_RATE;
   const code = won ? makeCode(player) : "";
+  const blessing = won ? pickDailyBlessing(player, code, now) : "";
+  const blessingLabel = won ? getBlessingLabel(now) : "";
 
   if (won) {
     state.playerMisses[player] = 0;
     state.vouchers.unshift({
       code,
       player,
+      blessing,
+      blessingLabel,
       status: "active",
-      createdAt: new Date().toLocaleString("zh-CN", { hour12: false }),
+      createdAt: now.toLocaleString("zh-CN", { hour12: false }),
       redeemedAt: "",
     });
   } else {
@@ -207,7 +245,9 @@ function runSingleDraw(player) {
     guaranteed,
     attempt,
     code,
-    time: new Date().toLocaleString("zh-CN", { hour12: false }),
+    blessing,
+    blessingLabel,
+    time: now.toLocaleString("zh-CN", { hour12: false }),
   };
 }
 
@@ -228,13 +268,23 @@ function renderDrawResult(results) {
   const player = escapeHtml(last.player);
 
   if (wins.length > 0) {
-    const codes = wins.map((item) => escapeHtml(item.code)).join(" / ");
+    const blessingCards = wins
+      .map(
+        (item) => `
+          <div class="blessing-card">
+            <span>${escapeHtml(item.blessingLabel)}</span>
+            <strong>“${escapeHtml(item.blessing)}”</strong>
+            <small>核销码：${escapeHtml(item.code)}</small>
+          </div>
+        `,
+      )
+      .join("");
     drawResult.className = "result-panel win";
     drawResult.innerHTML = `
       <div class="result-visual">☕</div>
       <p class="result-kicker">${wins.length > 1 ? `中了 ${wins.length} 杯` : "中了"}</p>
       <h3>${player} 获得一杯咖啡</h3>
-      <p class="code-line">核销码：${codes}</p>
+      <div class="blessing-list">${blessingCards}</div>
     `;
     return;
   }
@@ -355,6 +405,7 @@ function renderVouchers() {
           <span>
             <strong>${escapeHtml(voucher.code)}</strong>
             <small>${escapeHtml(voucher.player)}｜${statusText}</small>
+            ${voucher.blessing ? `<small class="voucher-blessing">“${escapeHtml(voucher.blessing)}”</small>` : ""}
           </span>
           ${action}
         </li>
@@ -397,6 +448,51 @@ function makeCode(player) {
   const prefix = player.replace(/\s+/g, "").slice(0, 16) || "咖啡";
   const random = Math.random().toString(36).slice(2, 6).toUpperCase();
   return `${prefix}-${random}`;
+}
+
+function pickDailyBlessing(player, code, date) {
+  const dateKey = getLocalDateKey(date);
+  if (state.dailyBlessings.date !== dateKey) {
+    state.dailyBlessings = { date: dateKey, usedIndexes: [] };
+  }
+
+  if (state.dailyBlessings.usedIndexes.length >= BLESSINGS.length) {
+    state.dailyBlessings.usedIndexes = [];
+  }
+
+  const startIndex = hashString(`${dateKey}|${player}|${code}`) % BLESSINGS.length;
+  let blessingIndex = startIndex;
+  for (let offset = 0; offset < BLESSINGS.length; offset += 1) {
+    const candidate = (startIndex + offset) % BLESSINGS.length;
+    if (!state.dailyBlessings.usedIndexes.includes(candidate)) {
+      blessingIndex = candidate;
+      break;
+    }
+  }
+
+  state.dailyBlessings.usedIndexes.push(blessingIndex);
+  return BLESSINGS[blessingIndex];
+}
+
+function getLocalDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function getBlessingLabel(date) {
+  const weekdays = ["星期日", "星期一", "星期二", "星期三", "星期四", "星期五", "星期六"];
+  return `${date.getMonth() + 1}月${date.getDate()}日 · ${weekdays[date.getDay()]}咖啡签`;
+}
+
+function hashString(value) {
+  let hash = 2166136261;
+  for (const character of value) {
+    hash ^= character.codePointAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
 }
 
 function getActivePlayer() {
@@ -482,9 +578,20 @@ function loadState() {
       drawHistory: Array.isArray(saved?.drawHistory) ? saved.drawHistory : [],
       giftHistory: Array.isArray(saved?.giftHistory) ? saved.giftHistory : [],
       vouchers: Array.isArray(saved?.vouchers) ? saved.vouchers : [],
+      dailyBlessings:
+        saved?.dailyBlessings && typeof saved.dailyBlessings === "object"
+          ? saved.dailyBlessings
+          : { date: "", usedIndexes: [] },
     };
   } catch {
-    return { playerMisses: {}, names: [], drawHistory: [], giftHistory: [], vouchers: [] };
+    return {
+      playerMisses: {},
+      names: [],
+      drawHistory: [],
+      giftHistory: [],
+      vouchers: [],
+      dailyBlessings: { date: "", usedIndexes: [] },
+    };
   }
 }
 

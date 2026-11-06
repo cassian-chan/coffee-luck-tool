@@ -438,6 +438,41 @@ textarea:focus {
   overflow-wrap: anywhere;
 }
 
+.blessing-list {
+  width: 100%;
+  max-height: 360px;
+  display: grid;
+  gap: 8px;
+  overflow: auto;
+}
+
+.blessing-card {
+  width: 100%;
+  padding: 13px 14px;
+  display: grid;
+  gap: 6px;
+  border: 1px solid rgba(243, 187, 76, 0.52);
+  border-radius: 8px;
+  background: rgba(255, 253, 247, 0.82);
+  text-align: left;
+}
+
+.blessing-card span,
+.blessing-card small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.blessing-card strong {
+  color: var(--coffee-dark);
+  font-size: 16px;
+  line-height: 1.55;
+}
+
+.blessing-card small {
+  overflow-wrap: anywhere;
+}
+
 .result-panel.win {
   border-color: rgba(243, 187, 76, 0.88);
   background: linear-gradient(145deg, rgba(255, 255, 255, 0.9), rgba(255, 244, 211, 0.92));
@@ -564,6 +599,12 @@ textarea:focus {
   margin-top: 2px;
   color: var(--muted);
   line-height: 1.35;
+}
+
+.voucher-list .voucher-blessing {
+  margin-top: 5px;
+  color: var(--coffee);
+  font-style: italic;
 }
 
 .modal {
